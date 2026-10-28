@@ -8,6 +8,7 @@ const app = express();
 const path = require('path')
 const multer = require('multer');
 const Cart = require('./models/Cart');
+const Order = require('./models/checkout')
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 const cors = require('cors');
@@ -262,13 +263,13 @@ app.get('/api/product-details/:id', async (req, res) => {
 app.get('/api/cart-product', async (req, res) => {
     try {
         const sessionId = req.headers['session-id'];
-        
+
         // Find the cart belonging to this specific browser session
         const cart = await Cart.findOne({ sessionId }).populate('items.productId');
-        
+
         return res.status(200).json({
             success: true,
-            data: cart ? cart.items : [] 
+            data: cart ? cart.items : []
         });
     } catch (error) {
         console.error("Error fetching cart:", error);
@@ -279,7 +280,7 @@ app.get('/api/cart-product', async (req, res) => {
 app.post('/api/cart-product/:id', async (req, res) => {
     try {
         const productId = req.params.id;
-        const sessionId = req.headers['session-id']; 
+        const sessionId = req.headers['session-id'];
 
         // ADD THESE LOGS:
         console.log("--- ADD TO CART HIT ---");
@@ -303,7 +304,7 @@ app.post('/api/cart-product/:id', async (req, res) => {
             cart.items.push({ productId, quantity: 1 });
         }
 
-        await cart.save(); 
+        await cart.save();
         console.log("SUCCESSFULLY SAVED TO DB!");
 
         res.status(200).json({ success: true, message: "Added to cart" });
@@ -312,6 +313,28 @@ app.post('/api/cart-product/:id', async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
 });
+app.get('/api/check-out', async (req, res) => {
+})
+app.post('/api/check-out', async (req, res) => {
+    const { productName, category, price, stockQuantity, description, productImages } = req.body;
+    const sessionId = req.headers['session-id'];
+    const user = await Cart.findOne({ sessionId }).populate('items.productId');
+    if (!user) {
+        return res.status(201).json({
+            success: false,
+            message: "something went wrong",
+        })
+    }
+    const createOrder = await Order.create({
+        productName,
+        category, price,
+        stockQuantity,
+        description,
+        productImages
+    })
+    
+})
+
 
 async function isAdmin(req, res, next) {
     try {

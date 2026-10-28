@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-const Product = require('./models/product')
+
 
 const Navbar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -203,7 +203,8 @@ const Navbar = () => {
             </span>
           </div>
           <p className="text-xs text-stone-400 mb-6 text-center">Shipping and taxes calculated at checkout.</p>
-          <button
+          <a
+          href='/checkout'
             disabled={productsList.length === 0}
             className={`w-full py-4 text-white font-bold uppercase tracking-wider text-sm rounded-lg transition-colors ${productsList.length > 0
               ? 'bg-[#162032] hover:bg-[#0f172a] active:scale-[0.98]'
@@ -211,7 +212,7 @@ const Navbar = () => {
               }`}
           >
             Checkout
-          </button>
+          </a>
         </div>
       </div>
     </>

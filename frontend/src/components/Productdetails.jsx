@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-const Product = require('./models/product')
+
 
 // 1. Put the session helper OUTSIDE your functions so it can be reused easily
 const getSessionId = () => {
@@ -27,10 +27,9 @@ const ProductDetails = () => {
       try {
         setLoading(true);
         setError(false);
-        
+
         // This must be a GET request to your product-details route!
         const productDetails = await axios.get(`/api/product-details/${id}`);
-
         if (productDetails.data.data) {
           const p = productDetails.data.data;
           setspecificproductsList({
@@ -61,13 +60,13 @@ const ProductDetails = () => {
       // This is a POST request to your cart route using the session ID
       await axios.post(`/api/cart-product/${id}`, {}, {
         headers: {
-          'session-id': getSessionId() 
+          'session-id': getSessionId()
         }
       });
 
       // Redirect back to home after successfully adding to cart
       navigate('/');
-      
+
     } catch (error) {
       console.error("Failed to add to cart", error);
       alert("Could not add product to cart. Please try again.");
@@ -101,25 +100,25 @@ const ProductDetails = () => {
   return (
     <div className="min-h-screen bg-[#faf9f6] py-12 px-4 sm:px-6 lg:px-8 font-sans flex items-center justify-center">
       <div className="max-w-5xl w-full bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-500">
-        
+
         {/* Left: Product Image Area */}
         <div className="md:w-1/2 bg-[#f4f1eb] relative flex items-center justify-center min-h-[400px] md:min-h-[600px] p-8 md:p-12">
           {specificproductsList.productImages?.length > 0 ? (
             <div className="relative w-full h-full rounded-2xl shadow-xl overflow-hidden group bg-white">
-              <img 
+              <img
                 src={
                   specificproductsList.productImages[0].startsWith('http')
                     ? specificproductsList.productImages[0]
                     : `http://localhost:3000${specificproductsList.productImages[0]}`
                 }
-                alt={specificproductsList.name || 'Watch'} 
+                alt={specificproductsList.name || 'Watch'}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
               />
             </div>
           ) : (
-             <div className="text-center bg-white w-full h-full rounded-2xl shadow-xl flex items-center justify-center">
-                <span className="text-stone-400 font-serif italic text-lg">Image not available</span>
-             </div>
+            <div className="text-center bg-white w-full h-full rounded-2xl shadow-xl flex items-center justify-center">
+              <span className="text-stone-400 font-serif italic text-lg">Image not available</span>
+            </div>
           )}
         </div>
 
@@ -146,14 +145,13 @@ const ProductDetails = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mt-auto">
             {/* MAKE SURE handleAddToCart IS CONNECTED TO THIS BUTTON */}
-            <button 
+            <button
               disabled={specificproductsList.stock <= 0}
-              onClick={handleAddToCart} 
-              className={`flex-1 py-4 px-8 text-sm font-bold uppercase tracking-wider transition-all duration-300 rounded-lg shadow-sm ${
-                specificproductsList.stock > 0 
-                  ? 'bg-[#c19a6b] text-white hover:bg-[#a88355] active:scale-[0.98]' 
+              onClick={handleAddToCart}
+              className={`flex-1 py-4 px-8 text-sm font-bold uppercase tracking-wider transition-all duration-300 rounded-lg shadow-sm ${specificproductsList.stock > 0
+                  ? 'bg-[#c19a6b] text-white hover:bg-[#a88355] active:scale-[0.98]'
                   : 'bg-stone-200 text-stone-400 cursor-not-allowed'
-              }`}
+                }`}
             >
               {specificproductsList.stock > 0 ? 'Add to Cart' : 'Unavailable'}
             </button>
