@@ -94,46 +94,37 @@ app.post('/api/admin/login', async (req, res) => {
             console.log('3. Result: Admin NOT found in DB');
             return res.status(404).json({ success: false, message: 'Invalid credentials.' });
         }
-
         console.log(`3. Result: Admin found!`);
         console.log(`4. Password in DB: "${admin.password}"`);
-
         if (!admin.isActive) {
             console.log('5. Result: Account disabled');
             return res.status(403).json({ success: false, message: 'Account disabled.' });
         }
-
         const isMatch = await admin.comparePassword(password);
         console.log(`5. Password Match Result: ${isMatch}`);
-
         if (!isMatch) {
             console.log('-> FAILED: bcrypt.compare returned false.');
             return res.status(401).json({ success: false, message: 'Invalid credentials.' });
         }
-
         console.log('-> SUCCESS: Passwords match! Generating token...');
-
         // 1. Generate JWT token
         const token = jwt.sign(
             { id: admin._id, role: admin.role },
             process.env.MONGO_JWT,
             { expiresIn: '12h' }
         );
-
         // 2. Store in HTTP-only cookie (Optional, but still works great for React apps)
         res.cookie('superAdminToken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict'
         });
-
         // 3. Send success JSON back to React (React will handle the navigation to /admin)
         return res.status(200).json({
             success: true,
             message: 'Login successful!',
             token // You can also send the token in the JSON if your React app prefers saving it in localStorage
         });
-
     } catch (error) {
         console.error("SERVER ERROR:", error);
         return res.status(500).json({ success: false, message: 'Server error.' });
@@ -263,10 +254,7 @@ app.get('/api/product-details/:id', async (req, res) => {
 app.get('/api/cart-product', async (req, res) => {
     try {
         const sessionId = req.headers['session-id'];
-
-        // Find the cart belonging to this specific browser session
         const cart = await Cart.findOne({ sessionId }).populate('items.productId');
-
         return res.status(200).json({
             success: true,
             data: cart ? cart.items : []
@@ -314,28 +302,67 @@ app.post('/api/cart-product/:id', async (req, res) => {
     }
 });
 app.get('/api/check-out', async (req, res) => {
+    try {
+        const sessionId = req.headers['session-id'];
+        const cart = await Cart.findOne({ sessionId }).populate('items.productId');
+        return res.status(200).json({
+            success: true,
+            data: cart ? cart.items : []
+        });
+    } catch (error) {
+        console.error("Error fetching cart:", error);
+        return res.status(500).json({ success: false, message: "Failed to fetch cart" });
+    }
 })
 app.post('/api/check-out', async (req, res) => {
-    const { productName, category, price, stockQuantity, description, productImages } = req.body;
-    const sessionId = req.headers['session-id'];
-    const user = await Cart.findOne({ sessionId }).populate('items.productId');
-    if (!user) {
-        return res.status(201).json({
+    try {
+        // Removed sessionId from req.body since you are getting it from headers
+        const {
+            name, email, phoneNum, address, city, zipCode,
+            homeType, shippingMethod, paymentMethod, items,
+            totalAmount, orderStatus
+        } = req.body;
+
+        const sessionID = req.headers['session-id'];
+
+        // 1. Safety Check: Ensure session ID exists
+        if (!sessionID) {
+            return res.status(400).json({
+                success: false,
+                message: "Session ID is required to place an order."
+            });
+        }
+        const createOrder = await Order.create({
+            name,
+            email,
+            phoneNum,
+            address,
+            city,
+            zipCode,
+            homeType,
+            shippingMethod,
+            paymentMethod,
+            sessionId: sessionID, // Perfectly fine to map it here
+            items,
+            totalAmount,
+            orderStatus: orderStatus || 'Pending' // Fallback to 'Pending' if not provided
+        });
+        await Cart.deleteMany({ sessionId: sessionID });
+        res.status(201).json({
+            success: true,
+            data: createOrder,
+            message: "Order was created successfully!"
+        });
+
+    } catch (error) {
+        console.error('Checkout Error:', error);
+        res.status(500).json({
             success: false,
-            message: "something went wrong",
-        })
+            message: "Failed to place order. Please check the data.",
+            error: error.message
+        });
     }
-    const createOrder = await Order.create({
-        productName,
-        category, price,
-        stockQuantity,
-        description,
-        productImages
-    })
-    
-})
-
-
+});
 async function isAdmin(req, res, next) {
     try {
         // Look for the dedicated admin cookie name
@@ -375,6 +402,9 @@ async function isAdmin(req, res, next) {
     }
 
 }
-app.listen(port, () => {
-    console.log(`Backend running on port ${port}`);
+connectToDB().then(() => {
+    // Start server after DB connection succeeds
+    app.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+    });
 });

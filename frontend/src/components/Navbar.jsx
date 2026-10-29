@@ -43,15 +43,13 @@ const Navbar = () => {
   }, []);
 
   // Calculate cart totals (handles flat structures or populated productId structures)
-  const cartTotals = productsList.reduce(
-    (totals, item) => {
+  const cartTotals = productsList.reduce((totals, item) => {
       const price = item.price || item.productId?.price || 0;
       const qty = item.quantity || 1;
       totals.subtotal += price * qty;
       totals.itemCount += qty;
       return totals;
-    },
-    { subtotal: 0, itemCount: 0 }
+    },{ subtotal: 0, itemCount: 0 }
   );
 
   // Helper to safely format image URLs (matching your ProductDetails logic)
@@ -66,7 +64,7 @@ const Navbar = () => {
       <nav className="w-full flex items-center justify-between px-8 py-5 bg-[#FCFCF9] border-b border-gray-100">
         <div className="flex-shrink-0 cursor-pointer">
           <h1 className="text-2xl tracking-wide font-serif text-gray-800 font-semibold">
-            We Watch Vault
+            TheWatchVault
           </h1>
         </div>
 

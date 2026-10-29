@@ -11,6 +11,7 @@ import AdminProductEdit from './components/AdminProductEdit'
 import ProductDetails from './components/Productdetails';
 import Checkout from './components/checkout';
 import Footer from './components/Footer'
+import OrderSuccess from './components/Ordersuccess';
 function App() {
   return (
     <Routes>
@@ -36,6 +37,8 @@ function App() {
       <Route path="/product-details/:id" element={<ProductDetails />} />
         {/* specific product Route (Independent layout) */}
       <Route path="/checkout" element={<Checkout />} />
+        {/* specific product Route (Independent layout) */}
+      <Route path="/order-success" element={<OrderSuccess />} />
     </Routes>
   );
 }
