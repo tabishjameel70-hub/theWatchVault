@@ -19,10 +19,10 @@ const Hero = () => {
             Luxury isn't just a style, it's a statement.
           </p>
           
-          <button className="bg-[#C49B66] hover:bg-[#B08A58] text-white px-7 py-2.5 rounded text-sm font-medium transition-colors w-fit flex items-center gap-2 shadow-sm">
+          <a  href="/shop-collection" className="bg-[#C49B66] hover:bg-[#B08A58] text-white px-7 py-2.5 rounded text-sm font-medium transition-colors w-fit flex items-center gap-2 shadow-sm">
             Shop Collection
             <span className="text-base leading-none">&rarr;</span>
-          </button>
+          </a>
         </div>
 
         {/* Right Content: Hero Image */}

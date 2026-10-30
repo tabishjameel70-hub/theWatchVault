@@ -37,11 +37,11 @@ export default function AdminInventory() {
   return (
     <div className="flex min-h-screen bg-[#FDFDFB] font-sans text-gray-800">
 
-      {/* Sidebar */}
-      <aside className="hidden min-h-screen w-64 shrink-0 flex-col justify-between bg-[#1C2020] text-gray-300 shadow-xl md:flex">
+    {/* Sidebar */}
+      <aside className="hidden md:flex w-64 shrink-0 bg-[#1C2020] text-gray-300 flex-col justify-between min-h-screen shadow-xl">
         <div>
-          <div className="border-b border-gray-700 p-6">
-            <h1 className="font-serif text-xl font-semibold text-white">
+          <div className="p-6 border-b border-gray-700">
+            <h1 className="text-xl font-serif font-semibold text-white">
               The Watch Vault
             </h1>
             <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#C49B66]">
@@ -49,32 +49,33 @@ export default function AdminInventory() {
             </p>
           </div>
 
-          <nav className="mt-6 space-y-2 px-4">
-            <Link
-              to="/admin"
-              className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-300 transition hover:bg-gray-800 hover:text-white"
-            >
-              <span>📊</span>
+          <nav className="mt-6 px-4 space-y-2">
+            {/* Replaced navItems.map with static links */}
+            <div className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors bg-[#C49B66] text-white">
+              <span className="w-5 text-center text-lg" aria-hidden="true">📊</span>
               <span className="text-sm font-medium">Dashboard</span>
-            </Link>
-
-            <Link
-              to="/admin/inventory"
-              className="flex items-center gap-3 rounded-lg bg-[#C49B66] px-4 py-3 text-white"
-            >
-              <span>📦</span>
-              <span className="text-sm font-medium">Inventory</span>
-            </Link>
+            </div>
+            <div className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer">
+              <span className="w-5 text-center text-lg" aria-hidden="true">📦</span>
+              <a href="/admin/inventory" className='text-sm font-medium'>Inventory</a>
+            </div>
+            <div className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer">
+              <span className="w-5 text-center text-lg" aria-hidden="true">📦</span>
+              <a href="/admin/recent-orders" className='text-sm font-medium'>Recent Orders</a>
+            </div>
           </nav>
         </div>
 
         <div className="p-6">
           <button
             type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 text-sm text-gray-400 transition hover:text-white"
+            onClick={() => {
+              localStorage.removeItem('adminToken');
+              window.location.href = '/login';
+            }}
+            className="flex w-full items-center gap-3 text-sm text-gray-400 transition-colors hover:text-white"
           >
-            <span>↪</span>
+            <span aria-hidden="true">↪</span>
             <span>Logout</span>
           </button>
         </div>

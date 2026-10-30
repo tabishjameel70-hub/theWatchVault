@@ -9,6 +9,8 @@ const path = require('path')
 const multer = require('multer');
 const Cart = require('./models/Cart');
 const Order = require('./models/checkout')
+const bcrypt = require('bcrypt')
+const userModel = require('./models/user')
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 const cors = require('cors');
@@ -130,6 +132,44 @@ app.post('/api/admin/login', async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error.' });
     }
 });
+app.get('/api/signup', (req, res) => {
+    res.send('sigin')
+})
+app.post('/api/signup', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+        bcrypt.genSalt(10, function (err, salt) {
+            bcrypt.hash(password, salt, async (err, hash) => {
+                const createUser = await userModel.create({
+                    name,
+                    email,
+                    password: hash
+                });
+                const token = jwt.sign({ email }, process.env.MONGO_JWT);
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'strict'
+                });
+                // 3. Send success JSON back to React (React will handle the navigation to /admin)
+                return res.status(200).json({
+                    success: true,
+                    message: 'Login successful!',
+                    token // You can also send the token in the JSON if your React app prefers saving it in localStorage
+                });
+            });
+        });
+    } catch (error) {
+        console.error("SERVER ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: 'Server error.',
+            // Only send the real error details if you aren't in production
+            error: process.env.NODE_ENV !== 'production' ? error.message : undefined
+        });
+    }
+})
 // product listing
 app.get('/api/admin/products', isAdmin, async (req, res) => {
     try {
@@ -270,14 +310,22 @@ app.post('/api/cart-product/:id', async (req, res) => {
         const productId = req.params.id;
         const sessionId = req.headers['session-id'];
 
-        // ADD THESE LOGS:
-        console.log("--- ADD TO CART HIT ---");
-        console.log("Product ID:", productId);
-        console.log("Session ID received from frontend:", sessionId);
-
         if (!sessionId) {
             console.log("ERROR: Session ID is missing!");
             return res.status(400).json({ success: false, message: "Session ID missing" });
+        }
+
+        // 1. Fetch the product from the database first
+        const product = await Product.findById(productId);
+
+        // Safety Check: Does the product even exist?
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        // Safety Check: Is the product completely out of stock?
+        if (product.stockQuantity <= 0) {
+            return res.status(400).json({ success: false, message: "This item is currently out of stock." });
         }
 
         let cart = await Cart.findOne({ sessionId });
@@ -286,19 +334,61 @@ app.post('/api/cart-product/:id', async (req, res) => {
         }
 
         const itemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+
+        // 2. Figure out what the new quantity WOULD be if we let them add it
+        const currentQuantityInCart = itemIndex > -1 ? cart.items[itemIndex].quantity : 0;
+        const requestedQuantity = currentQuantityInCart + 1;
+
+        // 3. Block the action if the requested quantity exceeds available stock
+        if (requestedQuantity > product.stockQuantity) {
+            return res.status(400).json({
+                success: false,
+                message: `You cannot add more. Only ${product.stockQuantity} left in stock.`
+            });
+        }
+
+        // 4. Only update the cart if all safety checks pass
         if (itemIndex > -1) {
-            cart.items[itemIndex].quantity += 1;
+            cart.items[itemIndex].quantity = requestedQuantity;
         } else {
             cart.items.push({ productId, quantity: 1 });
         }
 
         await cart.save();
-        console.log("SUCCESSFULLY SAVED TO DB!");
+        console.log(`SUCCESS: Added ${product.name} to cart. Cart Qty is now ${requestedQuantity}.`);
 
         res.status(200).json({ success: true, message: "Added to cart" });
     } catch (error) {
         console.error("SERVER ERROR:", error);
         res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+// --- REMOVE ITEM FROM CART (DELETE ROUTE) ---
+app.delete('/api/cart-product/:id', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const sessionId = req.headers['session-id'];
+
+        if (!sessionId) {
+            return res.status(400).json({ message: "Session ID missing" });
+        }
+
+        const cart = await Cart.findOne({ sessionId });
+
+        if (!cart) {
+            return res.status(404).json({ message: "Cart not found" });
+        }
+
+        // Filter out the item that matches the ID, leaving the rest of the cart intact
+        cart.items = cart.items.filter(item => item.productId.toString() !== productId);
+
+        // Save the updated cart back to MongoDB
+        await cart.save();
+
+        res.status(200).json({ success: true, message: "Item removed successfully" });
+    } catch (error) {
+        console.error("Error deleting cart item:", error);
+        res.status(500).json({ message: "Server error while removing item" });
     }
 });
 app.get('/api/check-out', async (req, res) => {
@@ -316,22 +406,52 @@ app.get('/api/check-out', async (req, res) => {
 })
 app.post('/api/check-out', async (req, res) => {
     try {
-        // Removed sessionId from req.body since you are getting it from headers
-        const {
-            name, email, phoneNum, address, city, zipCode,
-            homeType, shippingMethod, paymentMethod, items,
-            totalAmount, orderStatus
-        } = req.body;
-
         const sessionID = req.headers['session-id'];
 
-        // 1. Safety Check: Ensure session ID exists
+        // 1. Validate Session ID immediately
         if (!sessionID) {
             return res.status(400).json({
                 success: false,
                 message: "Session ID is required to place an order."
             });
         }
+
+        const {
+            name, email, phoneNum, address, city, zipCode,
+            homeType, shippingMethod, paymentMethod, items,
+            totalAmount, orderStatus
+        } = req.body;
+
+        // 2. PRE-CHECK PHASE: Verify all items BEFORE touching the database
+        const productsToUpdate = []; // Store the products so we don't have to query them again
+
+        for (const item of items) {
+            const productId = item.productId?._id || item.productId || item._id;
+            const purchasedQty = item.quantity || 1;
+
+            const product = await Product.findById(productId);
+
+            if (!product) {
+                return res.status(404).json({ message: `Product with ID ${productId} not found.` });
+            }
+
+            if (product.stockQuantity < purchasedQty) {
+                return res.status(400).json({
+                    message: `Not enough stock for ${product.name}. Only ${product.stockQuantity} left.`
+                });
+            }
+
+            // Push to our array for the next phase
+            productsToUpdate.push({ document: product, purchasedQty });
+        }
+
+        // 3. EXECUTION PHASE: Deduct the stock only after all items passed the check
+        for (const target of productsToUpdate) {
+            target.document.stockQuantity -= target.purchasedQty;
+            await target.document.save();
+        }
+
+        // 4. Create the Order
         const createOrder = await Order.create({
             name,
             email,
@@ -342,12 +462,16 @@ app.post('/api/check-out', async (req, res) => {
             homeType,
             shippingMethod,
             paymentMethod,
-            sessionId: sessionID, // Perfectly fine to map it here
+            sessionId: sessionID,
             items,
             totalAmount,
-            orderStatus: orderStatus || 'Pending' // Fallback to 'Pending' if not provided
+            orderStatus: orderStatus || 'Pending'
         });
+
+        // 5. Clear the Cart
         await Cart.deleteMany({ sessionId: sessionID });
+
+        // 6. Respond Success
         res.status(201).json({
             success: true,
             data: createOrder,
@@ -363,6 +487,30 @@ app.post('/api/check-out', async (req, res) => {
         });
     }
 });
+app.get('/api/orders', isAdmin, async (req, res) => {
+    try {
+        const orders = await Order.find({}).sort({ createdAt: -1 }).populate('items.productId');
+        if (!orders) {
+            return res.status(201).json({
+                message: "there is no order yet..",
+                data: [],
+                success: false
+            })
+        }
+        res.status(200).json({
+            message: "...",
+            data: orders,
+            success: true
+        })
+    } catch (error) {
+        console.error('orders loading error:', error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to load orders. Please check the data.",
+            error: error.message
+        });
+    }
+})
 async function isAdmin(req, res, next) {
     try {
         // Look for the dedicated admin cookie name
@@ -401,6 +549,23 @@ async function isAdmin(req, res, next) {
         });
     }
 
+}
+async function isLoggined(req, res, next) {
+    if (!req.cookies || !req.cookies.token) {
+        return res.redirect('/login');
+    }
+    try {
+        let decoded = jwt.verify(req.cookies.token, JWT);
+        // Fetch the full user document so req.user contains _id
+        const user = await userModel.findOne({ email: decoded.email });
+        if (!user) {
+            return res.redirect('/login');
+        }
+        req.user = user;
+        next();
+    } catch (err) {
+        res.redirect('/login');
+    }
 }
 connectToDB().then(() => {
     // Start server after DB connection succeeds

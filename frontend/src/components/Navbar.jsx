@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+// Moved outside so all functions can access it easily
+const getSessionId = () => {
+  let sessionId = localStorage.getItem('guest_session_id');
+  if (!sessionId) {
+    sessionId = 'guest_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('guest_session_id', sessionId);
+  }
+  return sessionId;
+};
 
 const Navbar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -12,18 +21,9 @@ const Navbar = () => {
     try {
       setLoading(true);
       setError('');
-      const getSessionId = () => {
-        let sessionId = localStorage.getItem('guest_session_id');
-        if (!sessionId) {
-          // Generate a random string (e.g., 'guest_17xl9a3')
-          sessionId = 'guest_' + Math.random().toString(36).substr(2, 9);
-          localStorage.setItem('guest_session_id', sessionId);
-        }
-        return sessionId;
-      };
       const response = await axios.get('/api/cart-product', {
         headers: {
-          'session-id': getSessionId() // Send the guest ID!
+          'session-id': getSessionId()
         },
       });
       setProductList(response.data.data || []);
@@ -38,11 +38,46 @@ const Navbar = () => {
   useEffect(() => {
     fetchProducts();
     window.addEventListener('cartUpdated', fetchProducts);
-    // 3. Clean up
     return () => window.removeEventListener('cartUpdated', fetchProducts);
   }, []);
 
-  // Calculate cart totals (handles flat structures or populated productId structures)
+  // --- NEW: Handle Quantity Changes ---
+  const updateQuantity = async (productId, currentQty, delta, stockLimit) => {
+    const newQty = currentQty + delta;
+    
+    // Prevent dropping below 1
+    if (newQty < 1) return; 
+
+    // Prevent exceeding available stock
+    if (stockLimit && newQty > stockLimit) {
+      alert(`Cannot add more. Only ${stockLimit} left in stock.`);
+      return;
+    }
+
+    try {
+      await axios.post(`/api/cart-product/${productId}`, { quantity: newQty }, {
+        headers: { 'session-id': getSessionId() }
+      });
+      window.dispatchEvent(new Event('cartUpdated')); // Refresh cart UI
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      alert(error.response?.data?.message || 'Failed to update quantity.');
+    }
+  };
+
+  // --- NEW: Handle Item Deletion ---
+  const removeItem = async (productId) => {
+    try {
+      await axios.delete(`/api/cart-product/${productId}`, {
+        headers: { 'session-id': getSessionId() }
+      });
+      window.dispatchEvent(new Event('cartUpdated')); // Refresh cart UI
+    } catch (error) {
+      console.error('Error removing item:', error);
+      alert('Failed to remove item.');
+    }
+  };
+
   const cartTotals = productsList.reduce((totals, item) => {
       const price = item.price || item.productId?.price || 0;
       const qty = item.quantity || 1;
@@ -52,7 +87,6 @@ const Navbar = () => {
     },{ subtotal: 0, itemCount: 0 }
   );
 
-  // Helper to safely format image URLs (matching your ProductDetails logic)
   const getImageUrl = (item) => {
     const images = item.productImages || item.productId?.productImages;
     if (!images || images.length === 0) return null;
@@ -61,7 +95,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="w-full flex items-center justify-between px-8 py-5 bg-[#FCFCF9] border-b border-gray-100">
+     <nav className="w-full flex items-center justify-between px-8 py-5 bg-[#FCFCF9] border-b border-gray-100">
         <div className="flex-shrink-0 cursor-pointer">
           <h1 className="text-2xl tracking-wide font-serif text-gray-800 font-semibold">
             TheWatchVault
@@ -71,23 +105,24 @@ const Navbar = () => {
         <div className="hidden md:flex space-x-8">
           <a href="/" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Home</a>
           <a href="/shop" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Shop</a>
-          <a href="/about" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">About</a>
           <a href="/contact" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Contact</a>
         </div>
 
         <div className="flex items-center space-x-6">
-          <button className="text-gray-600 hover:text-gray-900 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-          </button>
+          
+          {/* User Profile / Login Link */}
+          <a 
+            href="/login" 
+            className="text-gray-600 hover:text-gray-900 transition-colors"
+            title="Sign In / Login"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </a>
 
-          <button className="text-gray-600 hover:text-gray-900 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-          </button>
-
-          <button className="text-gray-600 hover:text-gray-900 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
-          </button>
-
+          {/* Cart Button */}
           <button
             onClick={() => setIsCartOpen(true)}
             className="relative text-gray-600 hover:text-gray-900 transition-colors"
@@ -157,10 +192,14 @@ const Navbar = () => {
           ) : (
             <div className="p-6 space-y-6">
               {productsList.map((item) => {
-                const name = item.productName || item.productId?.productName || 'Unknown Watch';
-                const price = item.price || item.productId?.price || 0;
+                // Safely extract product document
+                const productDoc = item.productId || {};
+                const name = item.productName || productDoc.productName || 'Unknown Watch';
+                const price = item.price || productDoc.price || 0;
                 const qty = item.quantity || 1;
+                const stockLimit = productDoc.stockQuantity;
                 const imageUrl = getImageUrl(item);
+                const actualProductId = productDoc._id || item._id; 
 
                 return (
                   <div key={item._id} className="flex gap-4 border-b border-stone-100 pb-6 last:border-0 last:pb-0">
@@ -180,11 +219,41 @@ const Navbar = () => {
                         <h3 className="text-[#162032] font-serif text-sm md:text-base leading-tight mb-1 line-clamp-2">
                           {name}
                         </h3>
-                        <p className="text-stone-500 text-xs">Qty: {qty}</p>
+                        <p className="text-[#c19a6b] font-medium text-sm mt-1">
+                          PKR {Number(price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </p>
                       </div>
-                      <p className="text-[#c19a6b] font-medium text-sm">
-                        ${Number(price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </p>
+                      
+                      {/* ✨ NEW: Interactive Quantity & Delete Controls ✨ */}
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center border border-stone-200 rounded flex-shrink-0">
+                          <button 
+                            onClick={() => updateQuantity(actualProductId, qty, -1, stockLimit)}
+                            disabled={qty <= 1}
+                            className="px-2.5 py-0.5 text-stone-500 hover:bg-stone-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            -
+                          </button>
+                          <span className="px-3 py-0.5 text-xs font-medium text-stone-700 border-l border-r border-stone-200">
+                            {qty}
+                          </span>
+                          <button 
+                            onClick={() => updateQuantity(actualProductId, qty, 1, stockLimit)}
+                            className="px-2.5 py-0.5 text-stone-500 hover:bg-stone-100 transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button 
+                          onClick={() => removeItem(actualProductId)}
+                          className="text-xs text-red-400 hover:text-red-600 underline underline-offset-2 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      {/* End Controls */}
+
                     </div>
                   </div>
                 );
@@ -197,16 +266,17 @@ const Navbar = () => {
           <div className="flex justify-between mb-4">
             <span className="text-stone-500 font-medium">Subtotal</span>
             <span className="text-[#162032] font-serif font-semibold">
-              ${cartTotals.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              PKR {cartTotals.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
           </div>
           <p className="text-xs text-stone-400 mb-6 text-center">Shipping and taxes calculated at checkout.</p>
+          
+          {/* Note: Fixed the anchor tag so it actually becomes unclickable when empty */}
           <a
-          href='/checkout'
-            disabled={productsList.length === 0}
-            className={`w-full py-4 text-white font-bold uppercase tracking-wider text-sm rounded-lg transition-colors ${productsList.length > 0
+            href='/checkout'
+            className={`block text-center w-full py-4 text-white font-bold uppercase tracking-wider text-sm rounded-lg transition-colors ${productsList.length > 0
               ? 'bg-[#162032] hover:bg-[#0f172a] active:scale-[0.98]'
-              : 'bg-stone-300 cursor-not-allowed'
+              : 'bg-stone-300 pointer-events-none'
               }`}
           >
             Checkout

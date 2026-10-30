@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const AdminDashboard = () => {
   const [productsList, setProductList] = useState([]);
+  const [orders, setOrders] = useState([]);
   const fetchProducts = async () => {
     try {
       const response = await axios.get('/api/admin/products', {
@@ -13,8 +14,26 @@ const AdminDashboard = () => {
       console.error("Failed to fetch products:", error);
     }
   }
+  const fetchOrders = async () => {
+    try {
+      setIsLoading(true);
+      setError(false);
+      const response = await axios.get('/api/orders', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      setOrders(response.data.data || []);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+
+    } finally {
+      // THIS IS THE CRITICAL FIX:
+      // Stops the loading spinner/text so the table can render the data
+      setIsLoading(false);
+    }
+  }
   useEffect(() => {
     fetchProducts();
+    fetchOrders();
   }, []);
   // State for text inputs
   const [formData, setFormData] = useState({
@@ -120,7 +139,11 @@ const AdminDashboard = () => {
             </div>
             <div className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer">
               <span className="w-5 text-center text-lg" aria-hidden="true">📦</span>
-             <a href="/admin/inventory" className='text-sm font-medium'>Inventory</a>
+              <a href="/admin/inventory" className='text-sm font-medium'>Inventory</a>
+            </div>
+            <div className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer">
+              <span className="w-5 text-center text-lg" aria-hidden="true">📦</span>
+              <a href="/admin/recent-orders" className='text-sm font-medium'>Recent Orders</a>
             </div>
           </nav>
         </div>
@@ -185,64 +208,16 @@ const AdminDashboard = () => {
               <p className="mt-3 text-2xl font-bold text-gray-900">0</p>
               <p className="mt-2 text-xs text-gray-400">Completed & pending</p>
             </div>
-       
-              <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-                <p className="text-xs font-medium text-gray-500">Total Products</p>
-                <p className="mt-3 text-2xl font-bold text-gray-900">{productsList.length}</p>
-                <p className="mt-2 text-xs text-gray-400">Active inventory</p>
-              </div>
- 
+
+            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+              <p className="text-xs font-medium text-gray-500">Total Products</p>
+              <p className="mt-3 text-2xl font-bold text-gray-900">{productsList.length}</p>
+              <p className="mt-2 text-xs text-gray-400">Active inventory</p>
+            </div>
+
           </section>
-
           <div className="grid grid-cols-1 gap-7 xl:grid-cols-3">
-            {/* Recent orders */}
-            <section className="flex min-w-0 flex-col gap-7 xl:col-span-2">
-              <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-serif text-lg font-bold text-gray-900">
-                      Recent Orders
-                    </h3>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Orders will appear here when connected to your API.
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-500">
-                    No live data
-                  </span>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-left text-sm">
-                    <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">Order</th>
-                        <th className="px-4 py-3 font-medium">Customer</th>
-                        <th className="px-4 py-3 font-medium">Product</th>
-                        <th className="px-4 py-3 font-medium">Amount</th>
-                        <th className="px-4 py-3 font-medium">Status</th>
-                        <th className="px-4 py-3 font-medium">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td
-                          colSpan={6}
-                          className="px-4 py-10 text-center text-sm text-gray-400"
-                        >
-                          No orders to display yet.
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Recent activity / Product List */}
-       
-              
-              
-              </section>
+      
 
             {/* Create product form */}
             <section className="h-fit rounded-xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">

@@ -41,7 +41,6 @@ const Checkout = () => {
           'session-id': getSessionId()
         }
       });
-      // ONLY set the cart items here. Do NOT navigate!
       setCartItems(response.data.data || []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -50,6 +49,7 @@ const Checkout = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchCartProducts();
     window.addEventListener('cartUpdated', fetchCartProducts);
@@ -64,7 +64,10 @@ const Checkout = () => {
     totals.itemCount += qty;
     return totals;
   }, { subtotal: 0, itemCount: 0 });
-
+  // Define delivery charges based on shipping method
+  const deliveryCharges = formData.shippingMethod === 'Express Delivery' ? 350 : 250;
+  // Final total amount including delivery charges
+  const grandTotal = subTotalAmount.subtotal > 0 ? subTotalAmount.subtotal + deliveryCharges : 0;
   // Handle images
   const getImageUrl = (item) => {
     const images = item.productImages || item.productId?.productImages;
@@ -79,9 +82,8 @@ const Checkout = () => {
     });
   };
 
-  // NEW: Handle form submission to your backend
-  // NEW: Handle form submission to your backend
-  const handleSubmit = async (e) => {
+  // Handle form submission to your backend
+const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError('');
@@ -92,28 +94,31 @@ const Checkout = () => {
       const payload = {
         ...formData,
         items: cartItems,
-        totalAmount: subTotalAmount.subtotal
+        shippingFee: deliveryCharges,
+        totalAmount: grandTotal 
       };
-      // Inside Checkout.jsx handleSubmit:
+
       const response = await axios.post('/api/check-out', payload, {
         headers: { 'session-id': sessionId }
       });
 
-      // 1. Merge your fully populated cartItems into the order!
+      // Merge your fully populated cartItems into the order for the success screen
       const completeOrder = {
         ...response.data.data,
-        items: cartItems
+        items: cartItems,
+        shippingFee: deliveryCharges,
+        totalAmount: grandTotal
       };
 
-      setCartItems([]);
-
-      // 2. Pass the merged order to your perfect OrderSuccess page
+      // Navigate to success page
       navigate('/order-success', { state: { order: completeOrder } });
 
-
+      // Clear the cart locally
+      setCartItems([]);
 
     } catch (err) {
       console.error('Checkout error:', err);
+      // This will now catch the "Not enough stock" error from the backend if it happens
       setError(err.response?.data?.message || 'Failed to place order.');
     } finally {
       setSubmitting(false);
@@ -199,7 +204,6 @@ const Checkout = () => {
                       <option value="Office">Office</option>
                       <option value="Other">Other</option>
                     </select>
-                    {/* Custom Select Arrow */}
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
@@ -218,8 +222,8 @@ const Checkout = () => {
                 <div className="relative">
                   <select name="shippingMethod" value={formData.shippingMethod} onChange={handleChange}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#c19a6b]/30 focus:border-[#c19a6b] transition-all duration-200 appearance-none cursor-pointer">
-                    <option value="Standard Delivery">Standard Delivery (3-5 Days)</option>
-                    <option value="Express Delivery">Express Delivery (1-2 Days)</option>
+                    <option value="Standard Delivery">Standard Delivery (3-5 Days) - Rs. 250</option>
+                    <option value="Express Delivery">Express Delivery (1-2 Days) - Rs. 500</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -267,7 +271,7 @@ const Checkout = () => {
                           </div>
                         </div>
                         <p className="text-sm font-medium text-slate-900">
-                          Rs. {(item.productId?.price * item.quantity).toLocaleString()}
+                          Rs. {((item.price || item.productId?.price || 0) * item.quantity).toLocaleString()}
                         </p>
                       </div>
                     )
@@ -286,12 +290,12 @@ const Checkout = () => {
                   <span className="font-medium text-slate-900">Rs. {subTotalAmount.subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>Shipping</span>
-                  <span className="text-slate-400 italic">Calculated at next step</span>
+                  <span>Shipping ({formData.shippingMethod})</span>
+                  <span className="font-medium text-slate-900">Rs. {deliveryCharges.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-lg font-bold pt-4 border-t border-slate-100 mt-2 text-slate-900">
                   <span>Total</span>
-                  <span className="text-[#c19a6b]">Rs. {subTotalAmount.subtotal.toLocaleString()}</span>
+                  <span className="text-[#c19a6b]">Rs. {grandTotal.toLocaleString()}</span>
                 </div>
               </div>
 
