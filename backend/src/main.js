@@ -45,10 +45,10 @@ const seedAdmin = async () => {
 };
 setTimeout(seedAdmin, 3000);
 // image uploading
-const fs = require('fs')
-if (!fs.existsSync(imageUploadPath)) {
-    fs.mkdirSync(imageUploadPath, { recursive: true });
-}
+// const fs = require('fs')
+// if (!fs.existsSync(imageUploadPath)) {
+//     fs.mkdirSync(imageUploadPath, { recursive: true });
+// }
 // const storage = multer.diskStorage({
 //     destination: function (req, file, cb) {
 //         cb(null, imageUploadPath);
