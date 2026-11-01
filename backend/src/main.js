@@ -16,7 +16,6 @@ app.use(cookieParser());
 const cors = require('cors');
 app.use(cors());
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
-const port = 3000;
 app.use(express.json());
 connectToDB();
 const seedAdmin = async () => {
@@ -567,9 +566,18 @@ async function isLoggined(req, res, next) {
         res.redirect('/login');
     }
 }
+const PORT = process.env.PORT || 3000;
 connectToDB().then(() => {
-    // Start server after DB connection succeeds
-    app.listen(port, () => {
-        console.log(`Server running on port ${port}`);
-    });
-});
+    console.log("MongoDB connection initialized.");
+    
+    // 2. Only start the active listener if running locally
+    if (process.env.NODE_ENV !== 'production') {
+      app.listen(PORT, () => {
+        console.log(`Server running locally on port ${PORT}`);
+      });
+    }
+  })
+  .catch((err) => {
+    console.error("Failed to connect to the database:", err);
+  });
+module.exports = app;
