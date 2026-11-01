@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-"main": "src/main.js",
+  "main": "src/main.js",
   "scripts": {
     "start": "node src/main.js",
     "dev": "nodemon src/main.js"
@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cor": "^0.0.0",
     "cors": "^2.8.6",
