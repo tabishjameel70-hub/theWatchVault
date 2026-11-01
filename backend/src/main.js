@@ -17,7 +17,6 @@ const cors = require('cors');
 app.use(cors());
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
 app.use(express.json());
-connectToDB();
 const seedAdmin = async () => {
     try {
         console.log('⏳ Forcing bulletproof admin reset...');
@@ -50,16 +49,17 @@ const fs = require('fs')
 if (!fs.existsSync(imageUploadPath)) {
     fs.mkdirSync(imageUploadPath, { recursive: true });
 }
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, imageUploadPath);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = path.extname(file.originalname);
-        cb(null, 'img-' + uniqueSuffix + extension);
-    }
-});
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, imageUploadPath);
+//     },
+//     filename: function (req, file, cb) {
+//         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+//         const extension = path.extname(file.originalname);
+//         cb(null, 'img-' + uniqueSuffix + extension);
+//     }
+// });
+const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);
@@ -72,7 +72,7 @@ const upload = multer({
     fileFilter: fileFilter,
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
-app.use('/images', express.static(imageUploadPath));
+app.use('/images', express.static(path.join(__dirname, 'public/uploads/images')));
 // ..
 app.get('/', (req, res) => {
     res.send('Hello World!');
