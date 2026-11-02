@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
 // Helper to manage guest sessions for the cart
 const getSessionId = () => {
   let sessionId = localStorage.getItem('guest_session_id');
