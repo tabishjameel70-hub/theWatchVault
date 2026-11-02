@@ -49,9 +49,6 @@ app.use('/images', express.static(path.join(__dirname, 'public/uploads/images'))
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
-app.get('/api/admin/login', (req, res) => {
-    res.send('Admin login route is active');
-});
 // Admin Login Route
 app.post('/api/admin/login', async (req, res) => {
     const email = req.body.email ? req.body.email.trim() : "";

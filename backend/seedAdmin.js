@@ -14,7 +14,7 @@ const seedAdmin = async () => {
         const hashedPassword = await bcrypt.hash('spideradmin1!', salt);
 
         // 3. Insert directly into MongoDB (Bypasses Mongoose models so it CANNOT fail)
-        await Admin.collection.insertOne({
+        await   Admin.collection.insertOne({
             name: 'Anas iftikhar',
             email: 'iftikharanus45@gmail.com',
             password: hashedPassword,
