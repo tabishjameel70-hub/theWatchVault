@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const Admin = require('./models/Admin');
 const Product = require('./models/product')
@@ -17,33 +16,6 @@ const cors = require('cors');
 app.use(cors());
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
 app.use(express.json());
-const seedAdmin = async () => {
-    try {
-        console.log('⏳ Forcing bulletproof admin reset...');
-        const bcrypt = require('bcrypt');
-        // 1. Wipe out the broken admin account completely
-        await Admin.deleteMany({ email: 'iftikharanus45@gmail.com' })
-        // 2. Generate the hash manually right here in main.js
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('spideradmin1!', salt);
-
-        // 3. Insert directly into MongoDB (Bypasses Mongoose models so it CANNOT fail)
-        await Admin.collection.insertOne({
-            name: 'Anas iftikhar',
-            email: 'iftikharanus45@gmail.com',
-            password: hashedPassword,
-            role: 'superadmin',
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
-
-        console.log('✅ SUCCESS: Admin account created with a guaranteed valid hash!');
-    } catch (error) {
-        console.error('❌ SEED SCRIPT CRASHED:', error.message);
-    }
-};
-setTimeout(seedAdmin, 3000);
 // image uploading
 // const fs = require('fs')
 // if (!fs.existsSync(imageUploadPath)) {
