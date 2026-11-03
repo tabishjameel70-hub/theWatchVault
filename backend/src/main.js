@@ -22,6 +22,11 @@ app.use((req,res,next)=>{
     }
     next();
 })
+app.use(cors({
+  origin: '*', // Allows all domains (or specify your frontend URL)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 // image uploading
 // const fs = require('fs')
 // if (!fs.existsSync(imageUploadPath)) {
