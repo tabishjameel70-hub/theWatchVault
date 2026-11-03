@@ -21,7 +21,7 @@ const Navbar = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await axios.get('/api/cart-product', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/cart-product`, {
         headers: {
           'session-id': getSessionId()
         },
@@ -55,7 +55,7 @@ const Navbar = () => {
     }
 
     try {
-      await axios.post(`/api/cart-product/${productId}`, { quantity: newQty }, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/cart-product/${productId}`, { quantity: newQty }, {
         headers: { 'session-id': getSessionId() }
       });
       window.dispatchEvent(new Event('cartUpdated')); // Refresh cart UI
@@ -68,7 +68,7 @@ const Navbar = () => {
   // --- NEW: Handle Item Deletion ---
   const removeItem = async (productId) => {
     try {
-      await axios.delete(`/api/cart-product/${productId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/cart-product/${productId}`, {
         headers: { 'session-id': getSessionId() }
       });
       window.dispatchEvent(new Event('cartUpdated')); // Refresh cart UI

@@ -23,7 +23,7 @@ const Signup = () => {
 
     try {
       // Adjust this endpoint to match your Node.js backend route
-      const response = await axios.post('/api/signup', formData);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/signup`, formData);
       
       // Automatically log them in by saving the token
       localStorage.setItem('token', response.data.token);

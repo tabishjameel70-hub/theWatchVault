@@ -19,7 +19,7 @@ const RecentOrders = () => {
     try {
       setIsLoading(true);
       setError(false);
-      const response = await axios.get('/api/orders', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const data = response.data.data || response.data || [];
@@ -34,7 +34,7 @@ const RecentOrders = () => {
 
   const fetchProductsCount = async () => {
     try {
-      const response = await axios.get('/api/admin/products', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/products`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const data = response.data.data || [];

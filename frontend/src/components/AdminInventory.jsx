@@ -12,7 +12,7 @@ export default function AdminInventory() {
     try {
       setLoading(true);
       setError('');
-      const response = await axios.get('/api/admin/products', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/products`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },

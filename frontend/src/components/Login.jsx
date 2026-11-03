@@ -19,7 +19,7 @@ const Login = () => {
 
     try {
       // Adjust this endpoint to match your Node.js backend route
-      const response = await axios.post('/api/users/login', formData);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/login`, formData);
       
       // Save the user token
       localStorage.setItem('token', response.data.token);

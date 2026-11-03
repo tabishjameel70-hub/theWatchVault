@@ -19,7 +19,7 @@ const AdminLogin = () => {
 
     try {
         // 1. FIXED: Added formData so the backend receives the email and password
-        const response = await axios.post('/api/admin/login', formData);
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/login`, formData);
         
         console.log(response.data.message);
         localStorage.setItem('adminToken', response.data.token);

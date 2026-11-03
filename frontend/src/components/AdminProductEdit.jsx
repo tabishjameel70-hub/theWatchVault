@@ -26,7 +26,7 @@ const AdminProductEdit = () => {
       try {
         setLoading(true);
         setError('');
-        const response = await axios.get(`/api/admin/products/${id}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/products/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         

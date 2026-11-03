@@ -29,7 +29,7 @@ const ProductDetails = () => {
         setError(false);
 
         // This must be a GET request to your product-details route!
-        const productDetails = await axios.get(`/api/product-details/${id}`);
+        const productDetails = await axios.get(`${import.meta.env.VITE_API_URL}/api/product-details/${id}`);
         if (productDetails.data.data) {
           const p = productDetails.data.data;
           setspecificproductsList({
@@ -58,7 +58,7 @@ const ProductDetails = () => {
   const handleAddToCart = async () => {
     try {
       // This is a POST request to your cart route using the session ID
-      await axios.post(`/api/cart-product/${id}`, {}, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/cart-product/${id}`, {}, {
         headers: {
           'session-id': getSessionId()
         }

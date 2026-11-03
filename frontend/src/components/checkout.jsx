@@ -98,7 +98,7 @@ const handleSubmit = async (e) => {
         totalAmount: grandTotal 
       };
 
-      const response = await axios.post('/api/check-out', payload, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/check-out`, payload, {
         headers: { 'session-id': sessionId }
       });
 
