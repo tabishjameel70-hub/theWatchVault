@@ -16,14 +16,12 @@ const cors = require('cors');
 app.use(cors());
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
 app.use(express.json());
-
 app.use((req,res,next)=>{
     if(!connectToDB){
         connectToDB();
     }
     next();
 })
-
 // image uploading
 // const fs = require('fs')
 // if (!fs.existsSync(imageUploadPath)) {
