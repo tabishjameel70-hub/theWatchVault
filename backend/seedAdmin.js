@@ -7,7 +7,7 @@ const seedAdmin = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('⏳ Forcing bulletproof admin reset...');
         const bcrypt = require('bcrypt');
-        // 1. Wipe out the broken admin account completely
+        // 1. Wipe out the brn admin account completely
         await Admin.deleteMany({ email: 'iftikharanus45@gmail.com' })
         // 2. Generate the hash manually right here in main.js
         const salt = await bcrypt.genSalt(10);
