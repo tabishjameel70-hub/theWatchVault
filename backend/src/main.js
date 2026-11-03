@@ -21,11 +21,32 @@ app.use((req,res,next)=>{
     }
     next();
 })
+// Allowed origins for development and production
+const allowedOrigins = [
+  'https://the-watch-vault-9rkj-9flc0ei4b-tabishcodez.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: '*', // Allows all domains (or specify your frontend URL)
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like Postman or server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // Allow exact frontend domain or any Vercel preview deployments
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Blocked by CORS'));
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', cors());
 app.use(express.json());
 
 // image uploading
