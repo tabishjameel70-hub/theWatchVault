@@ -16,6 +16,14 @@ const cors = require('cors');
 app.use(cors());
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
 app.use(express.json());
+
+app.use((req,res,next)=>{
+    if(!connectToDB){
+        connectToDB();
+    }
+    next();
+})
+
 // image uploading
 // const fs = require('fs')
 // if (!fs.existsSync(imageUploadPath)) {
@@ -518,35 +526,18 @@ async function isAdmin(req, res, next) {
     }
 
 }
-async function isLoggined(req, res, next) {
-    if (!req.cookies || !req.cookies.token) {
-        return res.redirect('/login');
-    }
-    try {
-        let decoded = jwt.verify(req.cookies.token, JWT);
-        // Fetch the full user document so req.user contains _id
-        const user = await userModel.findOne({ email: decoded.email });
-        if (!user) {
-            return res.redirect('/login');
-        }
-        req.user = user;
-        next();
-    } catch (err) {
-        res.redirect('/login');
-    }
-}
-const PORT = process.env.PORT || 3000;
-connectToDB().then(() => {
-    console.log("MongoDB connection initialized.");
+// const PORT = process.env.PORT || 3000;
+// connectToDB().then(() => {
+//     console.log("MongoDB connection initialized.");
     
-    // 2. Only start the active listener if running locally
-    if (process.env.NODE_ENV !== 'production') {
-      app.listen(PORT, () => {
-        console.log(`Server running locally on port ${PORT}`);
-      });
-    }
-  })
-  .catch((err) => {
-    console.error("Failed to connect to the database:", err);
-  });
+//     // 2. Only start the active listener if running locally
+//     if (process.env.NODE_ENV !== 'production') {
+//       app.listen(PORT, () => {
+//         console.log(`Server running locally on port ${PORT}`);
+//       });
+//     }
+//   })
+//   .catch((err) => {
+//     console.error("Failed to connect to the database:", err);
+//   });
 module.exports = app;

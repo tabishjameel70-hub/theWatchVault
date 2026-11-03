@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/main.js",
     "dev": "nodemon src/main.js",
-    "seed:admin": "node seedAdmin.js"
+    "seed:admin": "node seedAdmin.js",
+    "vercel-start" : "nodemon src/main.js"
   },
   "keywords": [],
   "author": "",
