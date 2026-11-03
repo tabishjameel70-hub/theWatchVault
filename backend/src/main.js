@@ -15,7 +15,6 @@ app.use(cookieParser());
 const cors = require('cors');
 app.use(cors());
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
-app.use(express.json());
 app.use((req,res,next)=>{
     if(!connectToDB){
         connectToDB();
@@ -27,6 +26,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.use(express.json());
+
 // image uploading
 // const fs = require('fs')
 // if (!fs.existsSync(imageUploadPath)) {
