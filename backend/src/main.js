@@ -13,7 +13,6 @@ const userModel = require('./models/user')
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 const cors = require('cors');
-app.use(cors());
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
 app.use((req,res,next)=>{
     if(!connectToDB){
@@ -27,7 +26,6 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000'
 ];
-
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like Postman or server-to-server)
