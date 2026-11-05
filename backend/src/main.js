@@ -22,7 +22,8 @@ app.use((req,res,next)=>{
 })
 // Allowed origins for development and production
 const allowedOrigins = [
-  'https://the-watch-vault-9rkj-9flc0ei4b-tabishcodez.vercel.app',
+  'https://the-watch-vault-9r3j.vercel.app', // <-- Add your live frontend URL here
+  'https://the-watch-vault-9r3j-6fcbde2b-tabishcoder2.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000'
 ];
