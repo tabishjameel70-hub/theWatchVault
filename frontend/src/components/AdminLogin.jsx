@@ -21,8 +21,10 @@ const AdminLogin = () => {
             // 1. FIXED: Added formData so the backend receives the email and password
             // const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/login`, formData);
             // Replace line 22 in AdminLogin.jsx:
-         const API_URL = import.meta.env.VITE_API_URL || 'https://the-watch-vault-tabishcoder2-9r3j.vercel.app';
-const response = await axios.post(`${API_URL}/api/admin/login`, formData);
+            const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
+            const response = await axios.post('https://the-watch-vault-a58h6wgwe-tabishcodez.vercel.app/api/admin/login', formData, {
+                withCredentials: true
+            });
             console.log(response.data.message);
             localStorage.setItem('adminToken', response.data.token);
 
