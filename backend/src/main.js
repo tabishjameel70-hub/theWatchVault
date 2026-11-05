@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const Admin = require('./models/Admin');
 const Product = require('./models/product')
@@ -14,12 +15,6 @@ const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 const cors = require('cors');
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
-app.use((req,res,next)=>{
-    if(!connectToDB){
-        connectToDB();
-    }
-    next();
-})
 // Allowed origins for development and production
 const allowedOrigins = [
   'https://the-watch-vault-9r3j.vercel.app', // <-- Add your live frontend URL here
@@ -45,7 +40,7 @@ app.use(cors({
 }));
 
 // Handle preflight OPTIONS requests explicitly
-app.options('*', cors());
+app.options('/(.*)', cors());
 app.use(express.json());
 
 // image uploading
@@ -550,18 +545,18 @@ async function isAdmin(req, res, next) {
     }
 
 }
-// const PORT = process.env.PORT || 3000;
-// connectToDB().then(() => {
-//     console.log("MongoDB connection initialized.");
+const PORT = process.env.PORT || 3000;
+connectToDB().then(() => {
+    console.log("MongoDB connection initialized.");
     
-//     // 2. Only start the active listener if running locally
-//     if (process.env.NODE_ENV !== 'production') {
-//       app.listen(PORT, () => {
-//         console.log(`Server running locally on port ${PORT}`);
-//       });
-//     }
-//   })
-//   .catch((err) => {
-//     console.error("Failed to connect to the database:", err);
-//   });
+    // 2. Only start the active listener if running locally
+    if (process.env.NODE_ENV !== 'production') {
+      app.listen(PORT, () => {
+        console.log(`Server running locally on port ${PORT}`);
+      });
+    }
+  })
+  .catch((err) => {
+    console.error("Failed to connect to the database:", err);
+  });
 module.exports = app;
