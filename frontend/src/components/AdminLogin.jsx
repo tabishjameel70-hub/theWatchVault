@@ -13,28 +13,29 @@ const AdminLogin = () => {
         setError(''); // Clear error when typing
     };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
 
-    try {
-        // 1. FIXED: Added formData so the backend receives the email and password
-        // const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/login`, formData);
-        // Replace line 22 in AdminLogin.jsx:
-const response = await axios.post('https://the-watch-vault-a58h6wgwe-tabishcodez.vercel.app/api/admin/login', formData);
-        console.log(response.data.message);
-        localStorage.setItem('adminToken', response.data.token);
-        
-        // (Optional but recommended) Redirect the user after successful login
-        navigate('/admin'); 
-        
-    } catch (error) { 
-        // 2. FIXED: Changed 'err' to 'error' to match the variable below
-        setError(error.response?.data?.message || 'Invalid credentials');
-    } finally {
-        setIsLoading(false);
-    }
-};
+        try {
+            // 1. FIXED: Added formData so the backend receives the email and password
+            // const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/login`, formData);
+            // Replace line 22 in AdminLogin.jsx:
+         const API_URL = import.meta.env.VITE_API_URL || 'https://the-watch-vault-tabishcoder2-9r3j.vercel.app';
+const response = await axios.post(`${API_URL}/api/admin/login`, formData);
+            console.log(response.data.message);
+            localStorage.setItem('adminToken', response.data.token);
+
+            // (Optional but recommended) Redirect the user after successful login
+            navigate('/admin');
+
+        } catch (error) {
+            // 2. FIXED: Changed 'err' to 'error' to match the variable below
+            setError(error.response?.data?.message || 'Invalid credentials');
+        } finally {
+            setIsLoading(false);
+        }
+    };
     return (
         <div className="min-h-screen bg-[#1C2020] flex items-center justify-center p-4 font-sans">
             <div className="w-full max-w-md bg-[#252A2A] rounded-2xl shadow-2xl p-8 border border-gray-800">
