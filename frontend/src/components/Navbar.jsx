@@ -95,7 +95,7 @@ const Navbar = () => {
 
   return (
     <>
-     <nav className="w-full flex items-center justify-between px-8 py-5 bg-[#FCFCF9] border-b border-gray-100">
+<nav className="fixed top-0 left-0 z-50 w-full flex items-center justify-between px-8 py-5 bg-[#FCFCF9] border-b border-gray-100">
         <div className="flex-shrink-0 cursor-pointer">
           <h1 className="text-2xl tracking-wide font-serif text-gray-800 font-semibold">
             TheWatchVault

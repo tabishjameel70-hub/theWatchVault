@@ -20,13 +20,7 @@ const FeaturedCollection = () => {
     try {
       setLoading(true);
       setError('');
-
-      const response = await axios.get('/api/admin/products', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
+      const response = await axios.get('/api/admin/products');
       setProductList(response.data.data || []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -85,7 +79,7 @@ const FeaturedCollection = () => {
               Discover the finest selection of premium watches.
             </p>
           </div>
-          <a href="/collection" className="text-[#C49B66] hover:text-[#B08A58] text-sm font-medium flex items-center gap-1 mt-4 md:mt-0 transition-colors">
+          <a href="/shop-collection" className="text-[#C49B66] hover:text-[#B08A58] text-sm font-medium flex items-center gap-1 mt-4 md:mt-0 transition-colors">
             View All <span>&rarr;</span>
           </a>
         </div>

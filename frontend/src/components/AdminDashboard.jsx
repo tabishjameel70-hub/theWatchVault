@@ -92,15 +92,15 @@ const AdminDashboard = () => {
 
     try {
       // 4. Send request using Axios
-      const response = await axios.post('/api/admin/productlisting',
-        submissionData,
-        {
-          headers: {
-            // Ensure auth token is sent if isAdmin middleware requires it
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
+  const response = await axios.post(
+  `${import.meta.env.VITE_API_URL}/api/admin/productlisting`,
+  submissionData,
+  {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
+    },
+  }
+);
       setSuccess('Product created successfully!');
       // Reset form
       setFormData({
@@ -192,30 +192,7 @@ const AdminDashboard = () => {
         <div className="px-5 py-7 sm:px-8 lg:px-10">
 
           {/* Summary cards: Replaced statItems.map with static cards for fetched data */}
-          <section
-            aria-label="Store overview"
-            className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-          >
-            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-medium text-gray-500">Total Revenue</p>
-              {/* Inject your fetched data state here, e.g., {fetchedData.revenue} */}
-              <p className="mt-3 text-2xl font-bold text-gray-900">PKR 0</p>
-              <p className="mt-2 text-xs text-gray-400">All time earnings</p>
-            </div>
-
-            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-medium text-gray-500">Total Orders</p>
-              <p className="mt-3 text-2xl font-bold text-gray-900">0</p>
-              <p className="mt-2 text-xs text-gray-400">Completed & pending</p>
-            </div>
-
-            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-medium text-gray-500">Total Products</p>
-              <p className="mt-3 text-2xl font-bold text-gray-900">{productsList.length}</p>
-              <p className="mt-2 text-xs text-gray-400">Active inventory</p>
-            </div>
-
-          </section>
+  
           <div className="grid grid-cols-1 gap-7 xl:grid-cols-3">
       
 

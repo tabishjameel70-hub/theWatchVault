@@ -4,23 +4,19 @@ import { Link, useLocation } from 'react-router-dom';
 
 const RecentOrders = () => {
   const location = useLocation();
-
-  // --- Data States ---
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const [totalProducts, setTotalProducts] = useState(0);
-
-  // --- UI States ---
   const [expandedRowId, setExpandedRowId] = useState(null);
-
-  // --- Fetch Data ---
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
       setError(false);
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
+        },
       });
       const data = response.data.data || response.data || [];
       setOrders(Array.isArray(data) ? data : []);
@@ -31,7 +27,6 @@ const RecentOrders = () => {
       setIsLoading(false);
     }
   };
-
   const fetchProductsCount = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/products`, {
@@ -43,17 +38,13 @@ const RecentOrders = () => {
       console.error('Failed to fetch products:', err);
     }
   };
-
   useEffect(() => {
     fetchOrders();
     fetchProductsCount();
   }, []);
-
-  // --- Helpers ---
   const toggleRow = (id) => {
     setExpandedRowId((prev) => (prev === id ? null : id));
   };
-
   const getImageUrl = (item) => {
     if (!item) return null;
     const images = item.productImages || item.productId?.productImages;
@@ -61,14 +52,10 @@ const RecentOrders = () => {
     const imagePath = images[0].startsWith('/') ? images[0] : `/${images[0]}`;
     return images[0].startsWith('http') ? images[0] : `http://localhost:3000${imagePath}`;
   };
-
-  // --- Derived Stats ---
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.totalAmount || order.price || 0), 0);
   const totalOrdersCount = orders.length;
-
   return (
     <div className="flex h-screen w-full bg-[#FAFAFA] font-sans overflow-hidden">
-      
       {/* ================= SIDEBAR ================= */}
       <aside className="hidden md:flex w-64 shrink-0 bg-[#1C2020] text-gray-300 flex-col justify-between min-h-screen shadow-xl">
         <div>
@@ -82,31 +69,28 @@ const RecentOrders = () => {
           </div>
 
           <nav className="mt-6 px-4 space-y-2">
-            <Link 
-              to="/admin" 
-              className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${
-                location.pathname === '/admin' ? 'bg-[#C49B66] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }`}
+            <Link
+              to="/admin"
+              className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${location.pathname === '/admin' ? 'bg-[#C49B66] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
             >
               <span className="w-5 text-center text-lg" aria-hidden="true">📊</span>
               <span className="text-sm font-medium">Dashboard</span>
             </Link>
-            
-            <Link 
-              to="/admin/inventory" 
-              className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${
-                location.pathname === '/admin/inventory' ? 'bg-[#C49B66] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }`}
+
+            <Link
+              to="/admin/inventory"
+              className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${location.pathname === '/admin/inventory' ? 'bg-[#C49B66] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
             >
               <span className="w-5 text-center text-lg" aria-hidden="true">📦</span>
               <span className="text-sm font-medium">Inventory</span>
             </Link>
-            
-            <Link 
-              to="/admin/recent-orders" 
-              className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${
-                location.pathname === '/admin/recent-orders' ? 'bg-[#C49B66] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }`}
+
+            <Link
+              to="/admin/recent-orders"
+              className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${location.pathname === '/admin/recent-orders' ? 'bg-[#C49B66] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
             >
               <span className="w-5 text-center text-lg" aria-hidden="true">🧾</span>
               <span className="text-sm font-medium">Recent Orders</span>
@@ -175,9 +159,8 @@ const RecentOrders = () => {
           <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900 font-serif">Order History</h3>
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                orders.length > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-              }`}>
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${orders.length > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+                }`}>
                 {orders.length > 0 ? `${orders.length} Live Orders` : 'No data'}
               </span>
             </div>
@@ -212,7 +195,7 @@ const RecentOrders = () => {
                     orders.map((order) => {
                       const orderId = order._id || order.id;
                       const isExpanded = expandedRowId === orderId;
-                      
+
                       const firstItem = order.items?.[0];
                       const productData = firstItem?.productId;
                       const imageUrl = getImageUrl(firstItem);
@@ -229,7 +212,7 @@ const RecentOrders = () => {
                       return (
                         <Fragment key={orderId}>
                           {/* ================= MAIN ROW ================= */}
-                          <tr 
+                          <tr
                             onClick={() => toggleRow(orderId)}
                             className={`group cursor-pointer transition-colors hover:bg-slate-50/70 border-t border-slate-100 ${isExpanded ? 'bg-slate-50/50' : ''}`}
                           >
@@ -276,7 +259,7 @@ const RecentOrders = () => {
                             </td>
 
                             <td className="px-6 py-4 text-right">
-                              <svg 
+                              <svg
                                 className={`inline-block h-5 w-5 text-slate-400 transition-transform duration-300 ease-in-out ${isExpanded ? 'rotate-180' : ''}`}
                                 fill="none" viewBox="0 0 24 24" stroke="currentColor"
                               >
@@ -290,9 +273,9 @@ const RecentOrders = () => {
                             <td colSpan={7} className="p-0 border-none">
                               <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                                 <div className="overflow-hidden bg-[#F8F9FA] shadow-inner">
-                                  
+
                                   <div className="p-6 md:p-8 border-l-4 border-[#C49B66]">
-                                    
+
                                     {/* Destination & Contact */}
                                     <div className="flex flex-col md:flex-row gap-8 md:gap-16 mb-8">
                                       <div className="flex-1">
@@ -302,16 +285,16 @@ const RecentOrders = () => {
                                           {fullAddress}
                                         </p>
                                       </div>
-                                      
+
                                       <div className="flex-1">
                                         <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">Customer Contact</h4>
                                         <div className="space-y-2 text-sm">
                                           <p className="flex items-center gap-2 text-slate-600">
-                                            <span className="font-medium text-slate-800 w-12">Email:</span> 
+                                            <span className="font-medium text-slate-800 w-12">Email:</span>
                                             {email}
                                           </p>
                                           <p className="flex items-center gap-2 text-slate-600">
-                                            <span className="font-medium text-slate-800 w-12">Phone:</span> 
+                                            <span className="font-medium text-slate-800 w-12">Phone:</span>
                                             {phone}
                                           </p>
                                         </div>
@@ -327,7 +310,7 @@ const RecentOrders = () => {
                                         {order.items?.map((item, index) => {
                                           const itemProductData = item.productId;
                                           const itemImgUrl = getImageUrl(item);
-                                          
+
                                           return (
                                             <div key={index} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                                               {itemImgUrl ? (
