@@ -17,32 +17,28 @@ const cors = require('cors');
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
 // Allowed origins for development and production
 const allowedOrigins = [
-  'https://the-watch-vault-9r3j.vercel.app', // <-- Add your live frontend URL here
-  'https://the-watch-vault-9r3j-6fcbde2b-tabishcoder2.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000'
+    'https://the-watch-vault-9r3j.vercel.app', // <-- Add your live frontend URL here
+    'https://the-watch-vault-9r3j-6fcbde2b-tabishcoder2.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
 ];
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like Postman or server-to-server)
-    if (!origin) return callback(null, true);
-    
-    // Allow exact frontend domain or any Vercel preview deployments
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
-    
-    return callback(new Error('Blocked by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like Postman or server-to-server)
+        if (!origin) return callback(null, true);
+
+        // Allow exact frontend domain or any Vercel preview deployments
+        if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+
+        return callback(new Error('Blocked by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-// Handle preflight OPTIONS requests explicitly
-app.options('/(.*)', cors());
 app.use(express.json());
-
 // image uploading
 // const fs = require('fs')
 // if (!fs.existsSync(imageUploadPath)) {
@@ -84,9 +80,7 @@ app.post('/api/admin/login', async (req, res) => {
         console.log('\n--- ADMIN LOGIN ATTEMPT ---');
         console.log(`1. Email from form: "${email}"`);
         console.log(`2. Password from form: "${password}" (Length: ${password.length})`);
-
         const admin = await Admin.findOne({ email });
-
         if (!admin) {
             console.log('3. Result: Admin NOT found in DB');
             return res.status(404).json({ success: false, message: 'Invalid credentials.' });
@@ -166,7 +160,7 @@ app.post('/api/signup', async (req, res) => {
     }
 })
 // product listing
-app.get('/api/admin/products', isAdmin, async (req, res) => {
+app.get('/api/admin/products', async (req, res) => {
     try {
         const products = await Product.find({}).sort({ _id: -1 });
         return res.status(200).json({
@@ -509,7 +503,11 @@ app.get('/api/orders', isAdmin, async (req, res) => {
 async function isAdmin(req, res, next) {
     try {
         // Look for the dedicated admin cookie name
-        const token = req.cookies.superAdminToken;
+        const authHeader = req.headers.authorization;
+        const token =
+            authHeader && authHeader.startsWith('Bearer ')
+                ? authHeader.split(' ')[1]
+                : req.cookies?.superAdminToken;
         if (!token) {
             return res.status(401).json({
                 success: false,
@@ -532,10 +530,7 @@ async function isAdmin(req, res, next) {
     } catch (error) {
         // 1. Log the error securely on your server for debugging
         console.error("Admin Auth Error:", error.message);
-
-        // 2. Clear the invalid/expired token cookie instantly
         res.clearCookie('superAdminToken');
-
         // 3. Send a 401/500 JSON response instead of a redirect
         return res.status(401).json({
             success: false,
@@ -548,15 +543,15 @@ async function isAdmin(req, res, next) {
 const PORT = process.env.PORT || 3000;
 connectToDB().then(() => {
     console.log("MongoDB connection initialized.");
-    
+
     // 2. Only start the active listener if running locally
     if (process.env.NODE_ENV !== 'production') {
-      app.listen(PORT, () => {
-        console.log(`Server running locally on port ${PORT}`);
-      });
+        app.listen(PORT, () => {
+            console.log(`Server running locally on port ${PORT}`);
+        });
     }
-  })
-  .catch((err) => {
-    console.error("Failed to connect to the database:", err);
-  });
+})
+    .catch((err) => {
+        console.error("Failed to connect to the database:", err);
+    });
 module.exports = app;
