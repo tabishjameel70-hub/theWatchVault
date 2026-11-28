@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken')
 const app = express();
 const path = require('path')
 const multer = require('multer');
+const cloudinary = require('../config/cloudinary');
 const Cart = require('./models/Cart');
 const Order = require('./models/checkout')
 const bcrypt = require('bcrypt')
@@ -54,6 +55,26 @@ app.use(express.json());
 //         cb(null, 'img-' + uniqueSuffix + extension);
 //     }
 // });
+
+// cloudinary logic
+
+const uploadToCloudinary = (fileBuffer) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'watch-vault/products'
+            },
+            (error, result) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve(result);
+            }
+        );
+        stream.end(fileBuffer);
+    });
+};
+
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -68,11 +89,9 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 app.use('/images', express.static(path.join(__dirname, 'public/uploads/images')));
-// ..
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
-// Admin Login Route
 app.post('/api/admin/login', async (req, res) => {
     const email = req.body.email ? req.body.email.trim() : "";
     const password = req.body.password ? req.body.password.trim() : "";
@@ -175,9 +194,54 @@ app.get('/api/admin/products', async (req, res) => {
         });
     }
 })
+// app.post('/api/admin/productlisting', isAdmin, upload.single('productImages'), async (req, res) => {
+//     // 1. Added stockQuantity to req.body extraction
+//     const { productName, category, price, description, stockQuantity } = req.body;
+//     const productImages = req.file;
+
+//     if (!productName || !category || !price || !description || !productImages) {
+//         return res.status(400).json({
+//             message: "productName, category, price, description, and productImages are required."
+//         });
+//     }
+
+//     try {
+//         const imagePath = `/images/${productImages.filename}`;
+
+//         const createProduct = await Product.create({
+//             productName,
+//             category,
+//             price,
+//             description,
+//             stockQuantity,
+//             productImages: [imagePath] // Wrap this in an array
+//         });
+
+//         res.status(201).json({
+//             success: true,
+//             data: createProduct,
+//             message: "Product created successfully",
+//         });
+//     } catch (err) {
+//         console.error("Error creating product:", err);
+//         res.status(500).json({
+//             success: false,
+//             message: "Failed to create product",
+//             error: err.message
+//         });
+//     }
+// });
+
 app.post('/api/admin/productlisting', isAdmin, upload.single('productImages'), async (req, res) => {
-    // 1. Added stockQuantity to req.body extraction
-    const { productName, category, price, description, stockQuantity } = req.body;
+
+    const {
+        productName,
+        category,
+        price,
+        description,
+        stockQuantity
+    } = req.body;
+
     const productImages = req.file;
 
     if (!productName || !category || !price || !description || !productImages) {
@@ -187,25 +251,32 @@ app.post('/api/admin/productlisting', isAdmin, upload.single('productImages'), a
     }
 
     try {
-        const imagePath = `/images/${productImages.filename}`;
+        // 1. Upload image to Cloudinary
+        const uploadResult = await uploadToCloudinary(productImages.buffer);
 
+        // 2. Get image URL
+        const imagePath = uploadResult.secure_url;
+
+        // 3. Save product in MongoDB
         const createProduct = await Product.create({
             productName,
             category,
             price,
             description,
             stockQuantity,
-            productImages: [imagePath] // Wrap this in an array
+            productImages: [imagePath]
         });
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
             data: createProduct,
-            message: "Product created successfully",
+            message: "Product created successfully"
         });
+
     } catch (err) {
         console.error("Error creating product:", err);
-        res.status(500).json({
+
+        return res.status(500).json({
             success: false,
             message: "Failed to create product",
             error: err.message
@@ -541,17 +612,17 @@ async function isAdmin(req, res, next) {
 
 }
 const PORT = process.env.PORT || 3000;
+
 connectToDB().then(() => {
     console.log("MongoDB connection initialized.");
 
-    // 2. Only start the active listener if running locally
-    if (process.env.NODE_ENV !== 'production') {
+    if (require.main === module) {
         app.listen(PORT, () => {
             console.log(`Server running locally on port ${PORT}`);
         });
     }
-})
-    .catch((err) => {
-        console.error("Failed to connect to the database:", err);
-    });
+}).catch((err) => {
+    console.error("Failed to connect to the database:", err);
+});
+
 module.exports = app;
