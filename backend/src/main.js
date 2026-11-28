@@ -1,4 +1,5 @@
-require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config()
 const express = require('express');
 const Admin = require('./models/Admin');
 const Product = require('./models/product')
@@ -17,29 +18,40 @@ app.use(cookieParser());
 const cors = require('cors');
 const imageUploadPath = path.join(__dirname, 'public/uploads/images');
 // Allowed origins for development and production
-const allowedOrigins = [
-    'https://the-watch-vault-9r3j.vercel.app', // <-- Add your live frontend URL here
-    'https://the-watch-vault-9r3j-6fcbde2b-tabishcoder2.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000'
-];
+// const allowedOrigins = [
+//     'https://the-watch-vault-9r3j.vercel.app', // <-- Add your live frontend URL here
+//     'https://the-watch-vault-9r3j-6fcbde2b-tabishcoder2.vercel.app',
+//     'http://localhost:5173',
+//     'http://localhost:3000'
+// ];
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like Postman or server-to-server)
-        if (!origin) return callback(null, true);
-
-        // Allow exact frontend domain or any Vercel preview deployments
-        if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-            return callback(null, true);
-        }
-
-        return callback(new Error('Blocked by CORS'));
-    },
+    // origin: function (origin, callback) {
+    //     if (!origin) return callback(null, true);
+    //     if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+    //         return callback(null, true);
+    //     }
+    //     return callback(new Error('Blocked by CORS'));
+    // },
+    // credentials: true,
+    // methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    // allowedHeaders: ['Content-Type', 'Authorization']
+    origin: process.env.FRONTEND_URL,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use(async (req, res, next) => {
+  try {
+    await connectToDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection unavailable'
+    });
+  }
+});
 // image uploading
 // const fs = require('fs')
 // if (!fs.existsSync(imageUploadPath)) {
@@ -55,9 +67,7 @@ app.use(express.json());
 //         cb(null, 'img-' + uniqueSuffix + extension);
 //     }
 // });
-
 // cloudinary logic
-
 const uploadToCloudinary = (fileBuffer) => {
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -74,7 +84,6 @@ const uploadToCloudinary = (fileBuffer) => {
         stream.end(fileBuffer);
     });
 };
-
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -611,18 +620,18 @@ async function isAdmin(req, res, next) {
     }
 
 }
-const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 3000;
 
-connectToDB().then(() => {
-    console.log("MongoDB connection initialized.");
+// connectToDB().then(() => {
+//     console.log("MongoDB connection initialized.");
 
-    if (require.main === module) {
-        app.listen(PORT, () => {
-            console.log(`Server running locally on port ${PORT}`);
-        });
-    }
-}).catch((err) => {
-    console.error("Failed to connect to the database:", err);
-});
+//     if (require.main === module) {
+//         app.listen(PORT, () => {
+//             console.log(`Server running locally on port ${PORT}`);
+//         });
+//     }
+// }).catch((err) => {
+//     console.error("Failed to connect to the database:", err);
+// });
 
 module.exports = app;
